@@ -1523,6 +1523,19 @@ EOF
 		sed -i 's|^@load file-extraction|#@load file-extraction|g' /opt/bro/share/bro/site/local.bro
 	fi
 
+	# Enable bro-pkg
+	apt install -y python3-pip
+	pip3 install bro-pkg
+	bro-pkg autoconfig
+	sed -i "s|^# deb-src |deb-src |" /etc/apt/sources.list.d/securityonion-ubuntu-$(lsb_release -c | awk '{print $NF}')-stable.list
+	apt update
+	mkdir -p /opt/bro/src
+	cd /opt/bro/src
+	bro_version=$(bro --version | awk '{print $NF}')
+	apt source securityonion-bro=${bro_version}
+	sed -i "s|bro_dist=.*|bro_dist=/opt/bro/src/securityonion-bro-${bro_version}|" $(which bro-config)
+	sed -i "s|bro_dist = .*|bro_dist = /opt/bro/src/securityonion-bro-${bro_version}|" /root/.bro-pkg/config
+
 	# Configure Bro to log in JSON
 	/usr/sbin/so-elastic-configure-bro >> $LOG 2>&1
 fi
